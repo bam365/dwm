@@ -1,0 +1,35 @@
+func stacknudgedown(Client C, Window W)
+        Count requesters, non requesters
+        Can C be nudged down?
+                No => Set request size to set size, return
+        Are there non-requesters ?
+                Divvy up the new space between them
+        Else find the smallest requester, give the space to it.
+
+
+func stacknudgeup(Client C, Window W)
+        Count requesters, non requesters
+        Calculate available space
+        Is it less than requested nudge up?
+                Yes +> Set request size to set size, return
+        Are there non-requesters ?
+                Take the space from them equally
+        Else find the largest requester, take space from it.
+
+
+
+func sizestacked(Window W)
+        Count requesters, non-requesters
+        If there are requesters
+                Make sure no window are requesting less than minimum
+                Total up requested space
+                Find maximum requestable space
+                If we have requested more than maximum
+                        Remove the requested space from each window
+                         based on the ratio of that space it requested
+                        Add any division error to the first requester
+                Set stacksize of all requesters to requested size
+        Find non-requested space
+        Divvy it up between non-requesters.
+        Add any division error to the first non-requester
+
