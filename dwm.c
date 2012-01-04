@@ -1984,10 +1984,8 @@ sizestacked(Monitor *m, int max, int min)
                 nonreqa = 0;
                 c = nexttiled(m->clients);
                 for (c = nexttiled(c->next); c; c = nexttiled(c->next)) {
-                        if (c->stacksizereq) {
-                                printf("DBG1\n");
+                        if (c->stacksizereq) 
                                 continue;
-                        }
                         if (firstnonreq == NULL)
                                 firstnonreq = c;
                         c->stacksize = ssplit;
