@@ -61,8 +61,9 @@
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
 enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
-enum { NetSupported, NetWMName, NetWMState,
-       NetWMFullscreen, NetActiveWindow, NetLast };     /* EWMH atoms */
+enum { NetSupported, NetWMName, NetWMState, NetWMFullscreen,
+       NetActiveWindow, NetNumberOfDesktops, NetCurrentDesktop,
+       NetLast };     /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast };             /* clicks */
@@ -229,6 +230,7 @@ static Bool sendevent(Client *c, Atom proto);
 static void sendmon(Client *c, Monitor *m);
 static void setclientstate(Client *c, long state);
 static void setfocus(Client *c);
+static void setnumdesktops(void);
 static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setup(void);
@@ -249,6 +251,7 @@ static void toggleview(const Arg *arg);
 static void unfocus(Client *c, Bool setfocus);
 static void unmanage(Client *c, Bool destroyed);
 static void unmapnotify(XEvent *e);
+static void updatecurrentdesktop(void);
 static Bool updategeom(void);
 static void updatebarpos(Monitor *m);
 static void updatebars(void);
@@ -1665,6 +1668,16 @@ sendmon(Client *c, Monitor *m) {
 }
 
 void
+setcurrentdesktop(void)
+{
+        long data[] = { 0 };
+        XChangeProperty(dpy, root, netatom[NetCurrentDesktop],
+                        XA_CARDINAL, 32, PropModeReplace,
+                        (unsigned char*)data, 1);
+}
+
+
+void
 setclientstate(Client *c, long state) {
 	long data[] = { state, None };
 
@@ -1730,6 +1743,16 @@ setmfact(const Arg *arg) {
 	arrange(selmon);
 }
 
+
+void
+setnumdesktops(void)
+{
+        long data[] = { TAGMASK };
+        XChangeProperty(dpy, root, netatom[NetNumberOfDesktops], XA_CARDINAL,
+                        32, PropModeReplace, (unsigned char *)data, 1);
+}
+
+
 void
 setup(void) {
 	XSetWindowAttributes wa;
@@ -1755,6 +1778,8 @@ setup(void) {
 	netatom[NetWMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
 	netatom[NetWMState] = XInternAtom(dpy, "_NET_WM_STATE", False);
 	netatom[NetWMFullscreen] = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
+        netatom[NetNumberOfDesktops] = XInternAtom(dpy, "_NET_NUMBER_OF_DESKTOPS", False);
+        netatom[NetCurrentDesktop] = XInternAtom(dpy, "_NET_CURRENT_DESKTOP", False);
 	/* init cursors */
 	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
 	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
@@ -1777,6 +1802,8 @@ setup(void) {
 	/* EWMH support per view */
 	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
 			PropModeReplace, (unsigned char *) netatom, NetLast);
+        setnumdesktops();
+        setcurrentdesktop();
 	/* select for events */
 	wa.cursor = cursor[CurNormal];
 	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask
@@ -2106,6 +2133,7 @@ toggleview(const Arg *arg) {
 		selmon->tagset[selmon->seltags] = newtagset;
 		arrange(selmon);
 	}
+        updatecurrentdesktop();
 }
 
 void
@@ -2180,6 +2208,15 @@ updatebarpos(Monitor *m) {
 	else
 		m->by = -bh;
 }
+
+void
+updatecurrentdesktop()
+{
+        long data[] = { selmon->tagset[selmon->seltags] };
+        XChangeProperty(dpy, root, netatom[NetCurrentDesktop], XA_CARDINAL,
+                        32, PropModeReplace, (unsigned char *)data, 1);
+}
+
 
 Bool
 updategeom(void) {
@@ -2389,6 +2426,7 @@ view(const Arg *arg) {
 	selmon->mfact = selmon->mfacts[selmon->curtag];
         
 	arrange(selmon);
+        updatecurrentdesktop();
 }
 
 void
